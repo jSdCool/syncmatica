@@ -7,11 +7,12 @@ import ch.endte.syncmatica.Syncmatica;
 import ch.endte.syncmatica.communication.ClientCommunicationManager;
 import ch.endte.syncmatica.communication.CommunicationManager;
 import ch.endte.syncmatica.communication.ExchangeTarget;
+import ch.endte.syncmatica.communication.SyncmaticaPayload;
 import ch.endte.syncmatica.litematica.LitematicManager;
 import ch.endte.syncmatica.litematica.ScreenHelper;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
+import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -52,16 +53,18 @@ public class ActorClientPlayNetworkHandler {
         LitematicManager.getInstance().setActiveContext(Syncmatica.getContext(Syncmatica.CLIENT_CONTEXT));
     }
 
-    public void packetEvent(final ClientPlayNetworkHandler clientPlayNetworkHandler, final CustomPayloadS2CPacket packet, final CallbackInfo ci) {
-        final Identifier id = packet.getChannel();
-        final Supplier<PacketByteBuf> bufSupplier = packet::getData;
-        if (clientCommunication == null) {
+    public void packetEvent(final ClientPlayNetworkHandler clientPlayNetworkHandler, final CustomPayload packet, final CallbackInfo ci) {
+        final Identifier id = packet.id();
+        if(packet instanceof SyncmaticaPayload snc) {
+            final Supplier<PacketByteBuf> bufSupplier = snc::getData;
+            if (clientCommunication == null) {
 
-            ActorClientPlayNetworkHandler.getInstance().startEvent(clientPlayNetworkHandler);
-        }
-        if (packetEvent(id, bufSupplier)) {
+                ActorClientPlayNetworkHandler.getInstance().startEvent(clientPlayNetworkHandler);
+            }
+            if (packetEvent(id, bufSupplier)) {
 
-            ci.cancel(); // prevent further unnecessary comparisons and reporting a warning
+                ci.cancel(); // prevent further unnecessary comparisons and reporting a warning
+            }
         }
     }
 
